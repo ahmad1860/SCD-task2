@@ -5,80 +5,57 @@ pipeline {
         nodejs 'NodeJS'
     }
 
-    parameters {
-        string(name: 'BRANCH_NAME', defaultValue: 'main', description: 'Branch to build from')
-        string(name: 'STUDENT_NAME', defaultValue: 'Muhammad Ahmad', description: 'Provide your name here — no name, no marks')
-        choice(name: 'ENVIRONMENT', choices: ['dev', 'qa', 'prod'], description: 'Select environment')
-        booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run Jest tests after build')
-    }
-
-    environment {
-        APP_VERSION = "1.0.${BUILD_NUMBER}"
-        MAINTAINER = "Student"
-    }
-
     stages {
         stage('Checkout') {
             steps {
-                echo "Checking out branch: ${params.BRANCH_NAME}"
                 checkout scm
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                echo "Installing required packages..."
                 bat 'npm install'
             }
         }
 
         stage('Build') {
             steps {
-                echo "Building version ${APP_VERSION} for ${params.ENVIRONMENT} environment"
-                bat '''
-                echo Simulating build process...
-                if not exist build mkdir build
-                copy src\\*.js build
-                echo Build completed successfully!
-                echo App version: %APP_VERSION% > build\\version.txt
-                '''
+                bat 'echo Building project...'
+                bat 'mkdir dist'
+                bat 'echo Version 1.0.9 > dist/version.txt'
             }
         }
 
         stage('Test') {
-            when {
-                expression { return params.RUN_TESTS }
-            }
             steps {
-                echo "Running Jest tests..."
                 bat 'npm test'
             }
         }
 
         stage('Package') {
             steps {
-                echo "Creating zip archive for version ${APP_VERSION}"
-                bat 'powershell Compress-Archive -Path build\\* -DestinationPath build_%APP_VERSION%.zip'
+                bat 'powershell Compress-Archive -Path src -DestinationPath dist\\build.zip -Force'
             }
         }
 
         stage('Deploy (Simulation)') {
             steps {
-                echo "Simulating deployment of version ${APP_VERSION} to ${params.ENVIRONMENT}"
+                echo 'Deploying to simulated environment...'
             }
         }
     }
 
     post {
         always {
-            echo "Cleaning up workspace..."
-            deleteDir()
+            echo 'Cleaning workspace...'
+            cleanWs()
         }
         success {
-            echo "Pipeline succeeded! Version ${APP_VERSION} built and tested."
+            echo 'Pipeline succeeded! Version 1.0.9 built and tested.'
+            echo '--- Submitted by: Muhammad Ahmad ---'
         }
         failure {
-            echo "Pipeline failed! Check console output for details."
+            echo 'Pipeline failed. Please check the logs.'
         }
     }
 }
